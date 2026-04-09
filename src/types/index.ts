@@ -1,41 +1,43 @@
-import 'dotenv/config';
-import { scrapeListings } from './scraper/playwright';
-import { upsertListings } from './db/supabase';
-import { notifyTelegram } from './utils/telegram';
-import { logger } from './utils/logger';
-import type { PropertyListing } from './types/index';
+// ============================================
+// src/types/index.ts
+// Apenas definições de tipos - SEM imports de outros módulos do projeto
+// ============================================
 
-async function main() {
-  const start = Date.now();
-  logger.info('🚀 Scraper iniciado');
-
-  let errors = 0;
-  let listings: PropertyListing[] = [];
-
-  try {
-    listings = await scrapeListings('', parseInt(process.env.MAX_PAGES || '2', 10));
-  } catch (e: any) {
-    errors++;
-    logger.error({ error: e.message }, '❌ Erro no scraping');
-  }
-
-  logger.info({ total: listings.length }, '📦 Extração concluída');
-
-  if (listings.length > 0) {
-    try {
-      const { inserted, skipped } = await upsertListings(listings);
-      logger.info({ inserted, skipped }, '💾 Supabase');
-    } catch (e: any) {
-      errors++;
-      logger.error({ error: e.message }, '❌ Erro no Supabase');
-    }
-  }
-
-  const duration = Math.round((Date.now() - start) / 1000);
-  await notifyTelegram({ total: listings.length, inserted: listings.length, skipped: 0, errors, duration });
-  
-  logger.info('✅ Pipeline finalizado', { duration: `${duration}s`, errors });
-  if (errors > 0) process.exitCode = 1;
+export interface PropertyListing {
+  id?: string;
+  title: string;
+  price: number;
+  location: string;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  area: number | null;
+  url: string;
+  imageUrls: string[];
+  postedDate: Date | null;
+  source: string;
+  scrapedAt: Date;
 }
 
-main().catch(e => { logger.error(e, '❌ Crítico'); process.exit(1); });
+export type RawPropertyData = {
+  title?: string;
+  price?: number;
+  location?: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area?: number | null;
+  url?: string;
+  imageUrls?: string[];
+  postedDate?: Date | null;
+  source?: string;
+  priceRaw?: string;
+  areaRaw?: string;
+  postedDateRaw?: string;
+};
+
+export interface ScraperStats {
+  total: number;
+  inserted: number;
+  skipped: number;
+  errors: number;
+  duration?: number;
+}

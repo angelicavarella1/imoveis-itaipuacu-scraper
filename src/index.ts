@@ -40,3 +40,4 @@ async function main() {
 main().catch(e => { logger.error(e, '❌ Crítico'); process.exit(1); });
 
 
+
