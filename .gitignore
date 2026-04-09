@@ -41,3 +41,8 @@ coverage/
 # 🔐 Crypto/Keys
 *.pem
 *.key
+
+# Debug files
+debug-*.html
+*.log
+
