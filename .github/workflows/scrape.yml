@@ -34,4 +34,3 @@ jobs:
           PAGE_WAIT_UNTIL: "domcontentloaded"
           MAX_PAGES: "2"
           DEBUG_MODE: "false"
-
