@@ -21,3 +21,4 @@ export function parseRelativeDate(dateStr: string | undefined | null): Date | nu
   const parsed = parse(dateStr, 'dd/MM/yyyy', today, { locale: ptBR });
   return isValid(parsed) ? parsed : null;
 }
+

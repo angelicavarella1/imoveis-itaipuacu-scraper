@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import 'dotenv/config';
-import { logger } from '../utils/logger';
-import type { PropertyListing } from '../types';
+import { logger } from '../utils/logger.js';
+import type { PropertyListing } from '../types.js';
 
 let client: SupabaseClient | null = null;
 
@@ -56,3 +56,4 @@ export async function upsertListings(listings: PropertyListing[]): Promise<{ ins
   logger.info({ inserted, total: listings.length }, 'Sync com Supabase');
   return { inserted, skipped };
 }
+

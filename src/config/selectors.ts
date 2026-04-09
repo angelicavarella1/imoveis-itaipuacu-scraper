@@ -67,3 +67,4 @@ export function getSelectors(source: 'olx' | 'zap' | 'vivareal' | 'agency') {
 }
 
 // 🏢 Olivia Imóveis: usa seletores genéricos (AGENCY_*)
+

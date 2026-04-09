@@ -1,8 +1,8 @@
 import 'dotenv/config';
-import { scrapeListings } from './scraper/playwright';
-import { upsertListings } from './db/supabase';
-import { notifyTelegram } from './utils/telegram';
-import { logger } from './utils/logger';
+import { scrapeListings } from './scraper/playwright.js';
+import { upsertListings } from './db/supabase.js';
+import { notifyTelegram } from './utils/telegram.js';
+import { logger } from './utils/logger.js';
 
 async function main() {
   const start = Date.now();
@@ -38,3 +38,4 @@ async function main() {
 }
 
 main().catch(e => { logger.error(e, '❌ Crítico'); process.exit(1); });
+

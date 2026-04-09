@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { RawPropertyData, PropertyListing } from '../types';
+import type { RawPropertyData, PropertyListing } from '../types.js';
 
 const PropertySchema = z.object({
   title: z.string().min(3),
@@ -65,3 +65,4 @@ export function validateAndClean(raw: RawPropertyData): PropertyListing | null {
   
   return listing;
 }
+
