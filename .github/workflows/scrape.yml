@@ -1,12 +1,10 @@
 name: Daily Scraper - 8h BR
 on:
   schedule:
-    - cron: '0 11 * * *' # 8:00 AM Brasília (UTC-3)
-  workflow_dispatch:     # Permite rodar manualmente
-
+    - cron: "0 11 * * *"
+  workflow_dispatch:
 permissions:
   contents: read
-
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -14,24 +12,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - env:
+      - name: Run scraper
+        run: node dist/index.js
+        env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          ACTIVE_SOURCE: 'olx,zap,vivareal,agency'
-          AGENCY_ENABLE: 'true'
-          AGENCY_URLS: 'https://www.habiteimoveis.com/,https://www.paulofeijoimoveis.com.br/,https://www.abducheimoveis.com.br/,https://www.ribeiroepedrosa.com.br/,https://www.armconsultoriaimobiliaria.com.br/,https://helderimoveis.com.br/,https://www.cavalleiroimoveis.com.br/,https://www.perfilmarica.com.br/,https://www.angelabarroco.com.br/,https://www.andersonimoveis.com.br/,https://www.iemovel.com.br/imoveis/a-venda/marica-rj'
-          TARGET_URL: 'https://www.olx.com.br/estado-rj/rio-de-janeiro-e-regiao/itaborai-e-regiao/marica'
-          ZAP_URL: 'https://www.zapimoveis.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km'
-          VIVAREAL_URL: 'https://www.vivareal.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km'
-          PAGE_TIMEOUT_MS: '60000'
-          PAGE_WAIT_UNTIL: 'domcontentloaded'
-          MAX_PAGES: '2'
-          DEBUG_MODE: 'false'
-        run: node dist/index.js
+          ACTIVE_SOURCE: "olx,zap,vivareal,agency"
+          AGENCY_ENABLE: "true"
+          AGENCY_URLS: "https://www.habiteimoveis.com/,https://www.paulofeijoimoveis.com.br/,https://www.abducheimoveis.com.br/,https://www.ribeiroepedrosa.com.br/,https://www.armconsultoriaimobiliaria.com.br/,https://helderimoveis.com.br/,https://www.cavalleiroimoveis.com.br/,https://www.perfilmarica.com.br/,https://www.angelabarroco.com.br/,https://www.andersonimoveis.com.br/,https://www.iemovel.com.br/imoveis/a-venda/marica-rj,https://www.oliviaimoveis.com/"
+          TARGET_URL: "https://www.olx.com.br/estado-rj/rio-de-janeiro-e-regiao/itaborai-e-regiao/marica"
+          ZAP_URL: "https://www.zapimoveis.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km"
+          VIVAREAL_URL: "https://www.vivareal.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km"
+          PAGE_TIMEOUT_MS: "60000"
+          PAGE_WAIT_UNTIL: "domcontentloaded"
+          MAX_PAGES: "2"
+          DEBUG_MODE: "false"
