@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { logger } from './logger.js';
-import type { ScraperStats } from '../types.js';
+import { logger } from './logger';
+import type { ScraperStats } from '../types';
 
 export async function notifyTelegram(stats: ScraperStats): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -37,4 +37,5 @@ export async function notifyTelegram(stats: ScraperStats): Promise<void> {
     logger.error(error, 'Erro de rede no Telegram');
   }
 }
+
 

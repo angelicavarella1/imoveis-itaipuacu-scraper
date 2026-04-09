@@ -2,7 +2,6 @@
   "name": "imoveis-itaipuacu-scraper",
   "version": "1.0.0",
   "description": "Standalone scraper for real estate in Itaipuaçu/Maricá",
-  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",

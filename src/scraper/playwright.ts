@@ -1,11 +1,11 @@
 import { chromium, type Route } from 'playwright';
 import 'dotenv/config';
 import { writeFileSync } from 'fs';
-import { logger } from '../utils/logger.js';
-import { getSelectors } from '../config/selectors.js';
-import { validateAndClean } from '../utils/validators.js';
-import { parseRelativeDate } from '../utils/dateParser.js';
-import type { PropertyListing, RawPropertyData } from '../types.js';
+import { logger } from '../utils/logger';
+import { getSelectors } from '../config/selectors';
+import { validateAndClean } from '../utils/validators';
+import { parseRelativeDate } from '../utils/dateParser';
+import type { PropertyListing, RawPropertyData } from '../types';
 
 type SourceType = 'olx' | 'zap' | 'vivareal' | 'agency';
 
@@ -211,4 +211,5 @@ export async function scrapeListings(_: string = '', maxPages = 1): Promise<Prop
   logger.info({ total: all.length, unique: unique.length }, '🎯 Todas fontes');
   return unique;
 }
+
 
