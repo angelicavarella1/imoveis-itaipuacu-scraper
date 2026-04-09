@@ -1,0 +1,43 @@
+# 📦 Dependencies
+node_modules/
+
+# 🏗️ Build Output
+dist/
+*.tsbuildinfo
+
+# 🔑 Environment Variables (NUNCA commite segredos!)
+.env
+.env.local
+.env.*.local
+
+# 📝 Logs
+*.log
+npm-debug.log*
+pino-*.log
+logs/
+
+# 🌍 OS Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+
+# 💻 IDE/Editor
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+
+# 🎭 Playwright Artifacts
+playwright-report/
+test-results/
+blob-report/
+
+# 🧪 Testing Coverage
+coverage/
+.nyc_output/
+
+# 🔐 Crypto/Keys
+*.pem
+*.key
