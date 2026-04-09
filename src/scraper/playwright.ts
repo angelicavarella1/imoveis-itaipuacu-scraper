@@ -16,7 +16,6 @@ const CONFIG = {
   BASE_DELAY: 3000,
   REGION_KEYWORDS: ['itaipuacu', 'maricá', 'marica', 'rj', 'rio de janeiro'],
   DAYS_BACK: 30,
-  // Portais com infinite scroll (não clicar em paginação)
   NO_PAGINATION: ['zap', 'vivareal'],
 };
 
@@ -27,13 +26,44 @@ const RX = {
   BATH: /(\d+)\s*(?:banheiros?|ban)/i,
 };
 
+// ============================================
+// FILTRO: Termos que indicam "NÃO é imóvel"
+// ============================================
+const NOT_REAL_ESTATE = [
+  'conversor', 'xbox', 'playstation', 'ps4', 'ps5', 'nintendo', 'switch',
+  'celular', 'iphone', 'samsung', 'motorola', 'smartphone',
+  'notebook', 'computador', 'pc gamer', 'monitor', 'teclado', 'mouse',
+  'geladeira', 'fogão', 'microondas', 'máquina de lavar', 'liquidificador',
+  'sofá', 'cama', 'guarda-roupa', 'mesa', 'cadeira', 'móvel',
+  'carro', 'moto', 'veículo', 'automóvel', 'hb20', 'onix', 'corolla',
+  'brinquedo', 'boneca', 'lego', 'monopoly', 'jogo', 'videogame',
+  'perfume', 'maquiagem', 'relógio', 'óculos', 'bijuteria',
+  'livro', 'apostila', 'revista', 'cd', 'dvd', 'blu-ray',
+  'ferramenta', 'furadeira', 'serra', 'parafuso', 'material de construção',
+  'acessório', 'acessorio', 'peça', 'peca', 'usado', 'seminovo'
+];
+
+const REAL_ESTATE_INDICATORS = [
+  'quarto', 'suíte', 'suite', 'banheiro', 'vaga', 'm²', 'm2', 'metros',
+  'terreno', 'casa', 'apartamento', 'sobrado', 'kitnet', 'chácara', 'sitio',
+  'sítio', 'fazenda', 'lote', 'galpão', 'salão', 'loja', 'imóvel', 'imovel',
+  'venda', 'aluguel', 'condomínio', 'condominio', 'praia', 'bairro'
+];
+
+function isRealEstate(title: string, text: string): boolean {
+  const content = (title + ' ' + text).toLowerCase();
+  // Se tiver termo negativo, NÃO é imóvel
+  if (NOT_REAL_ESTATE.some(term => content.includes(term))) return false;
+  // Deve ter pelo menos um indicador positivo
+  return REAL_ESTATE_INDICATORS.some(ind => content.includes(ind));
+}
+
 function isValidUrl(source: SourceType, url: string, domain?: string): boolean {
   if (!url) return false;
   const lower = url.toLowerCase();
   if (source === 'zap') return lower.includes('zapimoveis.com.br');
   if (source === 'vivareal') return lower.includes('vivareal.com.br');
   if (source === 'agency' && domain) return lower.includes(domain);
-  // Filtro flexível: aceita se tiver QUALQUER palavra-chave da região
   return CONFIG.REGION_KEYWORDS.some(k => lower.includes(k));
 }
 
@@ -60,7 +90,6 @@ function parseText(text: string): RawPropertyData {
 }
 
 async function acceptCookies(page: any) {
-  // Tenta aceitar banners de cookie comuns
   const selectors = [
     'button:has-text("Aceitar")', 'button:has-text("Accept")', 
     '[aria-label*="aceitar"]', '[aria-label*="accept"]',
@@ -100,12 +129,9 @@ async function scrapeSource(source: SourceType, url: string, domain?: string, ma
     const page = await context.newPage();
     await page.goto(url, { waitUntil: CONFIG.WAIT_UNTIL, timeout: CONFIG.TIMEOUT_MS });
     await page.waitForTimeout(CONFIG.BASE_DELAY);
-    
-    // Aceita cookies se aparecer banner
     await acceptCookies(page);
     await page.waitForTimeout(1000);
 
-    // 🐛 DEBUG: Salva HTML para análise se DEBUG_MODE=true
     if (CONFIG.HEADLESS === false) {
       const html = await page.content();
       writeFileSync(`debug-${name}.html`, html, 'utf-8');
@@ -115,7 +141,6 @@ async function scrapeSource(source: SourceType, url: string, domain?: string, ma
     const sel = getSelectors(source);
     try { await page.waitForSelector(sel.container.split(',')[0].trim(), { timeout: 10000 }); } catch {}
 
-    // Conta quantos elementos os seletores encontram (para diagnóstico)
     const count = await page.evaluate((s: any) => document.querySelectorAll(s.container).length, sel);
     logger.info({ source: name, selectorMatches: count }, '🔍 Elementos encontrados');
 
@@ -138,6 +163,13 @@ async function scrapeSource(source: SourceType, url: string, domain?: string, ma
         if (!isValidUrl(source, it.url, domain)) continue;
         
         const parsed = parseText(it.text);
+        
+        // 🎯 FILTRO PRINCIPAL: só processa se parecer ser imóvel real
+        if (!isRealEstate(parsed.title || '', it.text)) {
+          logger.debug({ source: name, title: (parsed.title || it.text).slice(0,40) }, '⏭️ Ignorado: não é imóvel');
+          continue;
+        }
+        
         const postedDate = parsed.postedDateRaw ? parseRelativeDate(parsed.postedDateRaw) : null;
         if (postedDate && postedDate < thirtyDaysAgo) continue;
 
@@ -145,7 +177,6 @@ async function scrapeSource(source: SourceType, url: string, domain?: string, ma
         if (it.url) raw.url = it.url;
         if (it.img.length > 0) raw.imageUrls = it.img.slice(0, 5);
         if (postedDate) raw.postedDate = postedDate;
-        // Filtro flexível de localização
         const textLower = (parsed.title + ' ' + it.text).toLowerCase();
         if (CONFIG.REGION_KEYWORDS.some(k => textLower.includes(k))) raw.location = 'Maricá/RJ';
         raw.source = name;
@@ -154,7 +185,6 @@ async function scrapeSource(source: SourceType, url: string, domain?: string, ma
         if (v) { results.push(v); logger.debug({ source: name, title: v.title.slice(0,40), price: v.price }, '✅'); }
       }
 
-      // Paginação: só clica se NÃO estiver na lista NO_PAGINATION
       if (p < maxPages - 1 && !CONFIG.NO_PAGINATION.includes(source)) {
         const next = await page.$(sel.next);
         if (!next) break;
@@ -185,14 +215,14 @@ export async function scrapeListings(_: string = '', maxPages = 1): Promise<Prop
   const all: PropertyListing[] = [];
   const sources = (process.env.ACTIVE_SOURCE || 'olx').split(',').map(s => s.trim() as SourceType);
   const urls: Record<SourceType, string> = {
-    olx: process.env.TARGET_URL || 'https://www.olx.com.br/estado-rj/rio-de-janeiro-e-regiao/itaborai-e-regiao/marica',
-    zap: process.env.ZAP_URL || 'https://www.zapimoveis.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km',
+    olx: process.env.TARGET_URL || 'https://www.olx.com.br/imoveis/estado-rj/rio-de-janeiro-e-regiao/itaborai-e-regiao/marica',
+    zap: process.env.ZAP_URL || 'https://www.zapimoveis.com.br/venda/rj/marica+e-regiao/?onde=Maricá%2C%20RJ',
     vivareal: process.env.VIVAREAL_URL || 'https://www.vivareal.com.br/venda/?latitude=-22.917&longitude=-42.8175&raio=2km',
     agency: '',
   };
 
   for (const src of sources.filter(s => s !== 'agency')) {
-    all.push(...await scrapeSource(src, urls[src], undefined, src === 'olx' ? maxPages : 1)); // Zap/VivaReal: só 1 página
+    all.push(...await scrapeSource(src, urls[src], undefined, src === 'olx' ? maxPages : 1));
   }
 
   if (process.env.AGENCY_ENABLE === 'true' || sources.includes('agency')) {
@@ -211,6 +241,3 @@ export async function scrapeListings(_: string = '', maxPages = 1): Promise<Prop
   logger.info({ total: all.length, unique: unique.length }, '🎯 Todas fontes');
   return unique;
 }
-
-
-
