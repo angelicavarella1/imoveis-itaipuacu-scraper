@@ -8,6 +8,8 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.42.1-jammy
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
